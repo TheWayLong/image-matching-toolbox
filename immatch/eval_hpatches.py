@@ -21,7 +21,7 @@ def eval_hpatches(
     debug=False,
 ):
     # Init paths
-    data_root = os.path.join(root_dir, 'data/datasets/hpatches-sequences-release')
+    data_root = os.path.join(root_dir, r'/remote-home/zwlong/icra_915/Datasets/hpatches-sequences-release')
     cache_dir = os.path.join(root_dir, odir, 'cache')
     result_dir = os.path.join(root_dir, odir, 'results', task)
     if not os.path.exists(cache_dir):

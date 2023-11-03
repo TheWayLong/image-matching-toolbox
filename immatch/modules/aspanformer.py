@@ -12,6 +12,9 @@ from .base import Matching
 from immatch.utils.data_io import load_gray_scale_tensor_cv
 from third_party.aspanformer.src.utils.dataset import read_megadepth_gray
 
+from immatch.utils.data_io import resize_im
+import cv2
+from PIL import Image
 
 class ASpanFormer(Matching):
     def __init__(self, args):
@@ -55,16 +58,17 @@ class ASpanFormer(Matching):
         return load_gray_scale_tensor_cv(
             im_path,
             self.device,
-            dfactor=8,
+            dfactor=16,
             imsize=self.imsize,
             value_to_scale=max,
-            pad2sqr=self.im_padding
+            #pad2sqr=self.im_padding
         )
 
     def match_inputs_(self, gray1, gray2, mask1=None, mask2=None):
         batch = {
             'image0': gray1, 'image1': gray2
         }
+        print(gray1.shape,gray2.shape)
         if mask1 is not None and mask2 is not None and self.coarse_scale:
             [ts_mask_1, ts_mask_2] = F.interpolate(
                 torch.stack([mask1, mask2], dim=0)[None].float(),

@@ -5,18 +5,25 @@ from third_party.superglue.models.superpoint import SuperPoint as SP
 from third_party.superglue.models.utils import read_image
 from .base import FeatureDetection, Matching
 
+from immatch.utils.data_io import resize_im,load_gray_scale_tensor
+import cv2
+from PIL import Image
+
 class SuperPoint(FeatureDetection, Matching):
     def __init__(self, args=None):   
         super().__init__()
+        print(args)
         self.imsize = args['imsize']
         self.match_threshold = args['match_threshold'] if 'match_threshold' in args else 0.0
         self.model = SP(args).eval().to(self.device)
+        self.dfactor=args['dfactor']
         rad = self.model.config['nms_radius']        
         self.name = f'SuperPoint_r{rad}'
         print(f'Initialize {self.name}')
         
     def load_and_extract(self, im_path):
-        _, gray, scale = read_image(im_path, self.device, [self.imsize], 0, True)
+        gray, scale=load_gray_scale_tensor(im_path,self.device,self.imsize,self.dfactor)
+        #_, gray, scale = read_image(im_path, self.device, [self.imsize], 0, True)
         kpts, desc = self.extract_features(gray) 
         kpts = kpts * torch.tensor(scale).to(kpts) # N, 2
         return kpts, desc        
@@ -46,11 +53,16 @@ class SuperPoint(FeatureDetection, Matching):
         return matches, kpts1, kpts2, scores
     
     def match_pairs(self, im1_path, im2_path):
-        _, gray1, sc1 = read_image(im1_path, self.device, [self.imsize], 0, True)
-        _, gray2, sc2 = read_image(im2_path, self.device, [self.imsize], 0, True)        
-        upscale = np.array([sc1 + sc2])        
+        gray1, sc1=load_gray_scale_tensor(im1_path,self.device,self.imsize,dfactor=16,value_to_scale=max)
+        gray2, sc2=load_gray_scale_tensor(im2_path,self.device,self.imsize,dfactor=16,value_to_scale=max)   
         matches, kpts1, kpts2, scores = self.match_inputs_(gray1, gray2)
         matches = upscale * matches
         kpts1 = sc1 * kpts1
         kpts2 = sc2 * kpts2
         return matches, kpts1, kpts2, scores
+    
+    def match(self, gray1, gray2):
+        matches, kpts1, kpts2, scores = self.match_inputs_(gray1, gray2)
+        return matches, kpts1, kpts2, scores
+        
+

@@ -67,6 +67,7 @@ def init_empty_sfm(args):
     )
     
     if args.empty_sfm.exists():
+        print(('Empty sfm existed.'))
         logging.info('Empty sfm existed.')
         return
     dataset_dir = args.dataset_dir
@@ -81,10 +82,10 @@ def init_empty_sfm(args):
         # Original Aachen  
         logging.info('Init empty sfm from nvm for aachen...')
         create_empty_model_from_nvm_and_database(
-            dataset_dir  / '3D-models/aachen_cvpr2018_db.nvm',
-            dataset_dir  / 'database.db',
+            Path(dataset_dir  +r'/'+ '3D-models/aachen_cvpr2018_db.nvm'),
+            Path(dataset_dir  +r'/'+ 'database.db'),
             args.empty_sfm,
-            dataset_dir / '3D-models/database_intrinsics.txt',    
+            Path(dataset_dir  +r'/'+ '3D-models/database_intrinsics.txt'),    
         )
     elif args.benchmark_name in ['aachen_v1.1']:
         # Aachen v1.1
@@ -285,7 +286,7 @@ def match_pairs_exporth5(pair_list, matcher, im_dir, output_dir, debug=False):
 
         pair_keys.append(key)
         pair_keys_set.add(key)
-        pair = (str(im_dir / name0), str(im_dir / name1))
+        pair = (str(im_dir +r'/'+ name0), str(im_dir +r'/'+ name1))
         pairs.append(pair)
 
     match_file = output_dir/'matches_raw.h5'

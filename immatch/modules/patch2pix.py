@@ -28,16 +28,21 @@ class Patch2Pix(Matching):
         print(f'Initialize {self.name}')
 
     def load_im(self, im_path):
-        im, scale = load_im_flexible(im_path, 2, self.model.upsample, imsize=self.imsize)
-        im = im.unsqueeze(0).to(self.device)
+        #im, scale = load_im_flexible(im_path, 16, self.model.upsample, imsize=self.imsize)
+        im, scale=load_im_tensor(im_path,self.device, imsize=1200,dfactor=16,value_to_scale=max)
+        #im = im.unsqueeze(0).to(self.device)
         return im, scale
 
     def match_pairs(self, im1_path, im2_path):
         # Assume batch size is 1
         # Load images
-        im1, sc1 = self.load_im(im1_path)
-        im2, sc2 = self.load_im(im2_path)
-        upscale = np.array([sc1 + sc2])
+        #####################################
+        #im1, sc1 = self.load_im(im1_path)
+        #im2, sc2 = self.load_im(im2_path)
+        #####################################
+        im1=im1_path
+        im2=im2_path
+        #upscale = np.array([sc1 + sc2])
 
         # Fine matches
         fine_matches, fine_scores, coarse_matches = self.model.predict_fine(
@@ -59,12 +64,12 @@ class Patch2Pix(Matching):
             scores = fine_scores
 
         if self.no_match_upscale:
-            return matches, matches[:, :2], matches[:, 2:4], scores, upscale.squeeze(0)
-
-        matches = upscale * matches
-        kpts1 = matches[:, :2]
-        kpts2 = matches[:, 2:4]
-        return matches, kpts1, kpts2, scores
+            return matches, matches[:, :2], matches[:, 2:4], scores#, upscale.squeeze(0)
+        return matches, matches[:, :2], matches[:, 2:4], scores
+        #matches = upscale * matches
+        #kpts1 = matches[:, :2]
+        #kpts2 = matches[:, 2:4]
+        #return matches, kpts1, kpts2, scores
 
 class NCNet(Matching):
     def __init__(self, args):
@@ -103,8 +108,9 @@ class Patch2PixRefined(Matching):
         print(f'Initialize {self.name}')
     
     def match_pairs(self, im1_path, im2_path):
-        im1, grey1, sc1 = load_im_tensor(im1_path, self.device, imsize=self.imsize, with_gray=True)
-        im2, grey2, sc2 = load_im_tensor(im2_path, self.device, imsize=self.imsize, with_gray=True)
+        im1, grey1, sc1 = load_im_tensor(im1_path, self.device, imsize=self.imsize, with_gray=True,dfactor=16)
+        im2, grey2, sc2 = load_im_tensor(im2_path, self.device, imsize=self.imsize, with_gray=True,dfactor=16)
+        #print(im1.shape,im2.shape)
         if self.cname in ['SuperGlue']:
             coarse_match_res = self.cmatcher.match_inputs_(grey1, grey2)
         elif self.cname == 'CAPS':
@@ -115,12 +121,15 @@ class Patch2PixRefined(Matching):
         refined_matches, scores, _ = self.fmatcher.refine_matches(im1, im2, 
                                                                   coarse_matches,
                                                                   io_thres=self.match_threshold)
+        kpts1 = refined_matches[:, :2]
+        kpts2 = refined_matches[:, 2:4]
+        return refined_matches, kpts1, kpts2, scores
 
         upscale = np.array([sc1 + sc2])
         matches = upscale * refined_matches
         kpts1 = matches[:, :2]
         kpts2 = matches[:, 2:4]
-        return matches, kpts1, kpts2, scores 
+        return matches, kpts1, kpts2, scores
 
 
 

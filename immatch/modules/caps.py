@@ -32,7 +32,7 @@ class CAPS(FeatureDetection, Matching):
     def load_im(self, im_path):
         return load_im_tensor(
             im_path, self.device, imsize=self.imsize, with_gray=True,
-            raw_gray=('SIFT' in self.name)
+            raw_gray=('SIFT' in self.name),dfactor=16,value_to_scale=max
         )
         
     def load_model(self, ckpt):
@@ -73,9 +73,11 @@ class CAPS(FeatureDetection, Matching):
         return matches, kpts1, kpts2, scores
     
     def match_pairs(self, im1_path, im2_path):
+
+        
         im1, gray1, sc1 = self.load_im(im1_path)
         im2, gray2, sc2 = self.load_im(im2_path)
-        upscale = np.array([sc1 + sc2])
+
         matches, kpts1, kpts2, scores = self.match_inputs_(im1, gray1, im2, gray2)
         matches = upscale * matches
         kpts1 = sc1 * kpts1

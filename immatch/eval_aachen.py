@@ -34,9 +34,9 @@ def eval_aachen(args):
     if not pair_list:
         return
     
-    # Initialize experiment paths 
-    args.dataset_dir = Path(args.dataset_dir)
-    args.im_dir = args.dataset_dir / 'images/images_upright'   
+    # Initialize experiment paths
+    print(args.dataset_dir)
+    args.im_dir = args.dataset_dir + r'/images/images_upright'
     args = init_paths(args)    
     print(args)
     
@@ -45,6 +45,7 @@ def eval_aachen(args):
         match_pairs_exporth5(pair_list, matcher, args.im_dir, args.output_dir) 
     
     # Extract keypoints
+    
     process_matches_and_keypoints_exporth5(
         pair_list, args.output_dir, args.result_dir,
         qt_psize=args.qt_psize, qt_dthres=args.qt_dthres,
@@ -64,8 +65,8 @@ if __name__ == '__main__':
     parser.add_argument('--prefix', type=str, default=None)    
     parser.add_argument('--colmap', type=str, required=True)
     parser.add_argument('--skip_match', action='store_true')    
-    parser.add_argument('--dataset_dir', type=str, default='data/datasets/AachenDayNight')
-    parser.add_argument('--pair_dir', type=str, default='data/pairs')
+    parser.add_argument('--dataset_dir', type=str, default=r'./data/datasets/AachenDayNight')
+    parser.add_argument('--pair_dir', type=str, default=r'./data/pairs')
     parser.add_argument(
         '--benchmark_name', type=str, choices=['aachen', 'aachen_v1.1'], default='aachen'
     )

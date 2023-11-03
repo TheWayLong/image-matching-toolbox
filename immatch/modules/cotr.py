@@ -10,7 +10,7 @@ sys.path.append(str(cotr_path))
 from COTR.models import build_model
 from .base import Matching
 from COTR.inference.sparse_engine import SparseEngine, FasterSparseEngine
-
+from immatch.utils.data_io import read_im
 
 class COTR(Matching):
     def __init__(self, args):
@@ -32,11 +32,13 @@ class COTR(Matching):
         print(f'Initialize {self.name}')
     
     def match_pairs(self, im1_path, im2_path, queries_im1=None):
-        im1 = imageio.imread(im1_path, pilmode='RGB')
-        im2 = imageio.imread(im2_path, pilmode='RGB')
+        #im1 = imageio.imread(im1_path, pilmode='RGB')
+        #im2 = imageio.imread(im2_path, pilmode='RGB')
+        im1,scale1 =read_im(im1_path, self.imsize,dfactor=16)
+        im2,scale2 =read_im(im2_path, self.imsize,dfactor=16)
         engine = SparseEngine(self.model, self.batch_size, mode='tile')
         matches = engine.cotr_corr_multiscale(
-            im1, im2, np.linspace(0.5, 0.0625, 4), 1,
+            np.array(im1), np.array(im2), np.linspace(0.5, 0.0625, 4), 1,
             max_corrs=self.max_corrs, queries_a=queries_im1,
             force=True
         )

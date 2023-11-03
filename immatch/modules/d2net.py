@@ -26,10 +26,11 @@ class D2Net(FeatureDetection, Matching):
         print(f'Initialize {self.name}')
         
     def load_and_extract(self, im_path):
-        im, scale =read_im(im_path, self.imsize)
+        im, scale =read_im(im_path, self.imsize,dfactor=16,value_to_scale=max)
         im = np.array(im)
-        im = preprocess_image(im, preprocessing='caffe')
+        im = preprocess_image(im, preprocessing='torch')
         kpts, desc = self.extract_features(im) 
+        return kpts, desc   
         kpts = kpts * scale # N, 2
         return kpts, desc        
     

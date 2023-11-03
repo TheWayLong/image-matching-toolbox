@@ -4,6 +4,7 @@ import numpy as np
 
 from third_party.superglue.models.superglue import SuperGlue as SG
 from third_party.superglue.models.utils import read_image
+from immatch.utils.data_io import resize_im,load_gray_scale_tensor
 from .superpoint import SuperPoint
 from .base import Matching
 
@@ -15,6 +16,7 @@ class SuperGlue(Matching):
 
         self.model = SG(args).eval().to(self.device)
         self.detector = SuperPoint(args)
+        self.dfactor=args['dfactor']
         rad = self.detector.model.config['nms_radius']
         self.name = f'SuperGlue_r{rad}'
         print(f'Initialize {self.name}')
@@ -46,11 +48,9 @@ class SuperGlue(Matching):
         return matches, kpts1, kpts2, scores
     
     def match_pairs(self, im1_path, im2_path):
-        _, gray1, sc1 = read_image(im1_path, self.device, [self.imsize], 0, True)
-        _, gray2, sc2 = read_image(im2_path, self.device, [self.imsize], 0, True)
-        upscale = np.array([sc1 + sc2])
+        gray1, sc1 = load_gray_scale_tensor(im1_path, self.device, self.imsize, self.dfactor,value_to_scale=max)
+        gray2, sc2 = load_gray_scale_tensor(im2_path, self.device, self.imsize, self.dfactor,value_to_scale=max)
         matches, kpts1, kpts2, scores = self.match_inputs_(gray1, gray2)
-
         if self.no_match_upscale:
             return matches, kpts1, kpts2, scores, upscale.squeeze(0)
 

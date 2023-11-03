@@ -82,7 +82,25 @@ class Matching(metaclass=ABCMeta):
                     For NN matcher, they can be the cosine distance of descriptors;
                     For SuperGlue, they are the probablities in the OT matrix; ..etc.                    
         """
-    
+    def match(self, im1, im2, **kwargs):
+        """The model detects correspondences from a pair of images.
+        All steps that are required to estimate the correspondences by a method
+        are implemented here.
+        Input:
+            im1, im2: the input image pair.
+            other args depend on the model.
+            
+        Return:
+            matches: the detected matches stored as numpy array with shape Nx4,
+                     N is the number of matches.
+            kpts1, kpts2: the keypoints used for matching. For methods that don't 
+                    explicitly define keypoints, e.g., SparseNCNet, 
+                    the keypoints are the locations of points that get matched.
+            scores: the matching score or confidence of each correspondence.
+                    Notices, matching scores are defined differently across methods.
+                    For NN matcher, they can be the cosine distance of descriptors;
+                    For SuperGlue, they are the probablities in the OT matrix; ..etc.                    
+        """
     
     
     

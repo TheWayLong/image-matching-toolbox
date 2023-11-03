@@ -9,34 +9,43 @@ sys.path.append(str(r2d2_path))
 from third_party.r2d2.extract import NonMaxSuppression, extract_multiscale
 from third_party.r2d2.tools.dataloader import norm_RGB
 from third_party.r2d2.nets.patchnet import *
-from PIL import Image
 from .base import FeatureDetection, Matching
-
+from immatch.utils.data_io import resize_im,read_im_gray
+import cv2
+from PIL import Image
 class R2D2(FeatureDetection, Matching):
     def __init__(self, args=None):   
         super().__init__()
         if type(args) == dict:
             args = Namespace(**args)
         self.args = args
-        
+        #self.device=torch.device('cpu')
         # Initialize model    
         ckpt = torch.load(args.ckpt)
         self.model = eval(ckpt['net']).to(self.device).eval()
         self.model.load_state_dict({k.replace('module.',''):v for k,v in ckpt['state_dict'].items()})
         self.name = 'R2D2'
         print(f'Initialize {self.name}')
-        
         # Init NMS Detector
         self.detector = NonMaxSuppression(rel_thr=args.reliability_thr, 
                                           rep_thr=args.repeatability_thr)
         
     def load_and_extract(self, im_path):
         # No image resize here
+        
         im = Image.open(im_path).convert('RGB')
-        im = norm_RGB(im)[None].to(self.device)
+        w1, h1 = im.size
+        w1,h1,scale1=resize_im(w1, h1, imsize=1200, dfactor=16, value_to_scale=max, enforce=True)
+        im=cv2.resize(np.array(im),(int(w1),int(h1)))
+        return self.extract_inputs(im)
+      
+    def extract_inputs(self,im_RGB):
+        im=im_RGB
+        im = norm_RGB(im_path)[None].to(self.device)
         kpts, desc = self.extract_features(im)
         return kpts, desc        
-    
+        
+        
     def extract_features(self, im):
         args = self.args 
         max_size = 9999 if args.imsize < 0 else args.imsize
@@ -60,5 +69,17 @@ class R2D2(FeatureDetection, Matching):
         p1s = kpts1[match_ids[:, 0], :2].cpu().numpy()
         p2s = kpts2[match_ids[:, 1], :2].cpu().numpy()
         matches = np.concatenate([p1s, p2s], axis=1)
-        return matches, kpts1, kpts2, scores 
+        return matches, kpts1.cpu().numpy(), kpts2.cpu().numpy(), scores
+    
+    def match(self,img_RGB1,img_RGB2):
+        kpts1, desc1 = self.extract_inputs(img_RGB1)
+        kpts2, desc2 = self.extract_inputs(img_RGB2)
+        
+        # NN Match
+        match_ids, scores = self.mutual_nn_match(desc1, desc2, threshold=self.args.match_threshold)
+        p1s = kpts1[match_ids[:, 0], :2].cpu().numpy()
+        p2s = kpts2[match_ids[:, 1], :2].cpu().numpy()
+        matches = np.concatenate([p1s, p2s], axis=1)
+        return matches, kpts1.cpu().numpy(), kpts2.cpu().numpy(), scores
+        
        

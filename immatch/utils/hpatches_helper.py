@@ -12,6 +12,20 @@ from immatch.utils.metrics import (
     cal_reproj_dists_H
 )
 
+def draw_matches(img_A, img_B, keypoints0, keypoints1):
+    p1s = []
+    p2s = []
+    dmatches = []
+    for i, (x1, y1) in enumerate(keypoints0):
+        p1s.append(cv2.KeyPoint(int(x1), int(y1), 1))
+        p2s.append(cv2.KeyPoint(int(keypoints1[i][0]), int(keypoints1[i][1]), 1))
+        j = len(p1s) - 1
+        dmatches.append(cv2.DMatch(j, j, 1))
+
+    matched_images = cv2.drawMatches(cv2.cvtColor(img_A, cv2.COLOR_RGB2BGR), p1s,
+                                     cv2.cvtColor(img_B, cv2.COLOR_RGB2BGR), p2s, dmatches, None)
+
+    return matched_images
 
 def eval_summary_homography(dists_sa, dists_si, dists_sv, thres):
     correct_sa = np.mean(
@@ -78,7 +92,7 @@ def eval_hpatches(
     scale_H=False,
     h_solver='degensac',
     ransac_thres=2,
-    thres=[1, 3, 5, 10],
+    thres=[1,2,3,4,5,6,7,8,9, 10],
     lprint_=print,
     print_out=False,
     save_npy=None,
@@ -145,8 +159,10 @@ def eval_hpatches(
             im2_path = os.path.join(seq_dir, '{}.ppm'.format(im_idx))
             H_gt = np.loadtxt(os.path.join(seq_dir, 'H_1_{}'.format(im_idx)))
             scale = np.ones(4)
-
+            print('scale=',scale)
             # Predict matches
+            
+            
             try:
                 t0 = time.time()
                 match_res = matcher(im1_path, im2_path)
@@ -155,11 +171,14 @@ def eval_hpatches(
                 if scale_H:
                     # scale = (wo / wt, ho / ht) for im1 & im2
                     scale = match_res[4]
-
                     # Scale gt homoragphies
                     H_scale_im1 = scale_homography(scale[0], scale[1])
                     H_scale_im2 = scale_homography(scale[2], scale[3])
                     H_gt = np.linalg.inv(H_scale_im2) @ H_gt @ H_scale_im1
+                img1_test=np.array(Image.open(im1_path))
+                img2_test=np.array(Image.open(im2_path))
+                cv2.imwrite(r'/remote-home/zwlong/image-matching-toolbox/test_match.jpg',cv2.resize(draw_matches(np.array(img1_test), np.array(img2_test), matches[:, :2], matches[:, 2:4]),(1600,1200)))
+
             except Exception as e:
                 print(e)
                 p1s = p2s = matches = []
@@ -195,22 +214,26 @@ def eval_hpatches(
                     H_pred = None
 
                 if H_pred is None:
+                    print('failed in H prediction')
                     corner_dist = np.nan
                     irat = 0
                     h_failed += 1
                     inliers = []
                 else:
+                    print('H',H_gt,H_pred)
                     im = Image.open(im1_path)
                     w, h = im.size
-                    w, h = w / scale[0], h / scale[1]
+                    #w, h = w / scale[0], h / scale[1]
                     corners = np.array([[0, 0, 1],
                                         [0, h - 1, 1],
                                         [w - 1, 0, 1],
                                         [w - 1, h - 1, 1]])
+                    print(corners)
                     real_warped_corners = np.dot(corners, np.transpose(H_gt))
                     real_warped_corners = real_warped_corners[:, :2] / real_warped_corners[:, 2:]
                     warped_corners = np.dot(corners, np.transpose(H_pred))
                     warped_corners = warped_corners[:, :2] / warped_corners[:, 2:]
+                    print(np.linalg.norm(real_warped_corners - warped_corners, axis=1))
                     corner_dist = np.mean(np.linalg.norm(real_warped_corners - warped_corners, axis=1))
                     irat = np.mean(inliers)
                 inlier_ratio.append(irat)
@@ -218,6 +241,7 @@ def eval_hpatches(
                 if sname[0] == 'i':
                     dists_si.append(corner_dist)
                 if sname[0] == 'v':
+                    print('homov',corner_dist)
                     dists_sv.append(corner_dist)
                     
             if print_out:

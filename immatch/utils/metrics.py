@@ -32,7 +32,18 @@ def cal_relapose_auc(statis, thresholds=[5, 10, 20]):
     min_pose_err = np.maximum(np.array(statis['R_errs']), np.array(statis['t_errs']))
     auc = cal_error_auc(min_pose_err, thresholds)
     print(f"RelaPose AUC@{'/'.join(map(str, thresholds))}deg: {auc}%")
-    return auc
+    tot_e_pose=min_pose_err
+    
+    acc_5 = (tot_e_pose < 5).mean()
+    acc_10 = (tot_e_pose < 10).mean()
+    acc_15 = (tot_e_pose < 15).mean()
+    acc_20 = (tot_e_pose < 20).mean()
+    map_5 = acc_5
+    map_10 = np.mean([acc_5, acc_10])
+    map_20 = np.mean([acc_5, acc_10, acc_15, acc_20])
+    MAP={'map_5':map_5,'map_10':map_10,'map_20':map_20,}
+    print(f"MAP@{'/'.join(map(str, thresholds))}deg: {MAP}%")
+    return auc,MAP
 
 def cal_error_auc(errors, thresholds):
     if len(errors) == 0:

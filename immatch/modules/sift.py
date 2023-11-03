@@ -15,10 +15,11 @@ class SIFT(FeatureDetection, Matching):
         self.match_threshold = args.match_threshold
         self.model = cv2.SIFT_create(args.npts)        
         self.name = f'SIFT{args.npts}'
+        self.dfactor=args.dfactor
         print(f'Initialize {self.name}')
         
     def load_im(self, im_path):
-        im, scale = read_im_gray(im_path, self.imsize)
+        im, scale = read_im_gray(im_path, self.imsize,dfactor=self.dfactor,value_to_scale=max)
         im = np.array(im)
         return im, scale
 
@@ -29,13 +30,17 @@ class SIFT(FeatureDetection, Matching):
         return kpts, desc        
     
     def extract_features(self, im):
-        kpts, desc = self.model.detectAndCompute(im, None)
+        try:
+            kpts, desc = self.model.detectAndCompute(im, None)
+        except:
+            im = cv2.normalize(im,None,0,255,cv2.NORM_MINMAX).astype('uint8')
+            kpts, desc = self.model.detectAndCompute(im, None)
         kpts = np.array([[kp.pt[0], kp.pt[1]] for kp in kpts])
         return kpts, desc
     
     def load_and_detect(self, im_path):
         im, scale = self.load_im(im_path)
-        kpts = self.detect(im)
+        kpts, desc = self.detect(im)
         kpts = kpts * scale        
         return kpts
 
@@ -58,10 +63,12 @@ class SIFT(FeatureDetection, Matching):
     def match_pairs(self, im1_path, im2_path):
         im1, sc1 = self.load_im(im1_path)
         im2, sc2 = self.load_im(im2_path)
-
-        upscale = np.array([sc1 + sc2])        
         matches, kpts1, kpts2, scores = self.match_inputs_(im1, im2)
         matches = upscale * matches
         kpts1 = sc1 * kpts1
         kpts2 = sc2 * kpts2
+        return matches, kpts1, kpts2, scores
+    
+    def match(self,im_gray1,im_gray2):
+        matches, kpts1, kpts2, scores = self.match_inputs_(im_gray1, im_gray2)
         return matches, kpts1, kpts2, scores
