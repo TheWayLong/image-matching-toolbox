@@ -32,8 +32,3 @@ def SuperGlue(benchmark_name='Outdoor'):
     print(model_conf)
     return model
 
-LoFTR()
-SuperGlue('Indoor')
-SuperPoint()
-SIFT_nn()
-R2D2_nn()
