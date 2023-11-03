@@ -2,13 +2,14 @@
 
 To use our code, first download this repository and initialize the submodules:
 ```bash
-git clone https://github.com/GrumpyZhou/image-matching-toolbox.git
+#git clone https://github.com/GrumpyZhou/image-matching-toolbox.git
+git clone https://github.com/TheWayLong/image-matching-toolbox.git
 
 # Install submodules non-recursively
 cd image-matching-toolbox/
 git submodule update --init
-```
 
+```
 Next, download the pretained models and place them to the correct places by running the followings:
 ```bash
 cd pretrained/
@@ -18,6 +19,7 @@ bash download.sh
 ## Setup Running Environment
 Following the steps to setup the ready environment to run the matching toolbox. The code has been tested on Ubuntu 18.04 with Python 3.7 + Pytorch 1.7.0  + CUDA 10.2.  
 ### 1. Create the immatch virtual environment
+##如果不需要创建新环境，在已有的环境上用，忽略这一步。
 ```bash
 conda env create -f environment.yml
 conda activate immatch
