@@ -1,5 +1,5 @@
 # how to use
-check [demo.py](demo,py) for details in using matchers 
+check [demo.py](demo.py) for details in using matchers 
 
 # A Toolbox for Image Feature Matching and Evaluations 
 In this repository, we provide **easy interfaces** for several exisiting SotA methods to match image feature correspondences between image pairs.
