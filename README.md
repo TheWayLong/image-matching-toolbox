@@ -1,3 +1,6 @@
+#how to use
+check [demo.py](demo,py) for details in using matchers 
+
 # A Toolbox for Image Feature Matching and Evaluations 
 In this repository, we provide **easy interfaces** for several exisiting SotA methods to match image feature correspondences between image pairs.
 We provide **scripts to evaluate** their predicted correspondences on common benchmarks for the tasks of image matching, homography estimation and visual localization.
